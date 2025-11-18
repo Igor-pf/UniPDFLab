@@ -17,11 +17,6 @@ python app.py
 ```
 Acesse em `http://localhost:5000`
 
-## 🐳 Instalação com Docker
-```bash
-docker build -t unipdflab .
-docker run -p 5000:5000 unipdflab
-```
 
 ## 🗂 Estrutura do projeto
 ```
@@ -53,3 +48,4 @@ Contribuições são bem-vindas! Para colaborar:
 
 ## 📄 Licença
 Este projeto está licenciado sob a [Licença MIT](LICENSE).
+
