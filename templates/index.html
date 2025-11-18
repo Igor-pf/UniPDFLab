@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>UniPDFLab | Gerenciador de PDFs</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- PDF.js (usar CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js';
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">UniPDFLab — Gerenciador de PDFs</div>
+    <div class="top-actions">
+      <form method="post" action="{{ url_for('merge') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn primary" type="submit" title="Unificar PDFs">Unificar</button>
+      </form>
+
+      <a class="btn" href="{{ url_for('download') }}" title="Baixar último merged.pdf">Baixar</a>
+
+      <!-- Upload rápido de múltiplos PDFs no header (input oculto + botões) -->
+      <form id="upload-form" class="inline-form" enctype="multipart/form-data" method="post" onsubmit="return false;">
+        <input id="upload-files" type="file" name="files" accept="application/pdf" multiple style="display:none" />
+        <button id="btn-add-files" type="button" class="btn" title="Adicionar PDFs (abre modal)">Adicionar PDFs</button>
+      </form>
+
+      <!-- Apagar tudo (Nova sessão) -->
+      <button id="btn-delete-all" class="btn" title="Apagar todos os PDFs e iniciar nova sessão">Apagar tudo (Nova sessão)</button>
+    </div>
+  </header>
+
+  <main class="app-grid">
+    <!-- SIDEBAR THUMBNAILS -->
+    <aside id="sidebar" class="sidebar">
+      <h3>Arquivos</h3>
+      <div id="thumbs-list" class="thumbs-list">
+        {% for f in state.order %}
+        <div class="thumb-card" data-fname="{{ f }}" title="{{ f }}">
+          <canvas class="thumb-canvas" width="160" height="208" aria-hidden="true"></canvas>
+          <div class="thumb-meta">
+            <div class="thumb-name" title="{{ f }}">{{ f }}</div>
+            <div class="thumb-controls">
+              <button class="btn delete small" data-file="{{ f }}">Remover</button>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <p class="muted">Nenhum PDF em <code>/input</code></p>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <!-- VIEWER -->
+    <section class="viewer-area">
+      <div class="viewer-topbar">
+        <div id="current-filename" class="current-file">Selecione um arquivo...</div>
+        <div class="viewer-controls">
+            <button id="prev-page" class="btn small" title="Página anterior">◀</button>
+            <span id="page-info">0 / 0</span>
+            <button id="next-page" class="btn small" title="Próxima página">▶</button>
+            <input id="page-go" type="number" min="1" class="page-input" placeholder="Ir p/ página" />
+            <button id="zoom-out" class="btn small" title="Zoom out">-</button>
+            <span id="zoom-level">100%</span>
+            <button id="zoom-in" class="btn small" title="Zoom in">+</button>
+
+            <!-- Botão de rotacionar a página corrente (aplica +90° a cada clique) -->
+            <button id="rotate-current" class="btn small" title="Rotacionar página atual (cada clique = +90°)">↻</button>
+        </div>
+      </div>
+
+      <div id="viewer-container" class="viewer-container">
+        <canvas id="pdf-canvas" class="pdf-canvas" role="document" aria-label="PDF preview"></canvas>
+        <div id="canvas-placeholder" class="placeholder">Preview do PDF</div>
+
+        <!-- feedback visual (opcional) -->
+        <div id="rotate-feedback" class="rotate-feedback" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true">
+            <path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="viewer-footer">
+        <small class="muted">Preview via PDF.js — alterações refletem após ações (rotacionar/restaurar).</small>
+      </div>
+    </section>
+  </main>
+
+  <!-- UPLOAD MANAGER MODAL -->
+  <div id="upload-modal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="upload-title">
+      <h4 id="upload-title">Adicionar PDFs — Gerenciador de Upload</h4>
+
+      <div class="modal-body">
+        <div class="upload-controls" style="display:flex;gap:8px;align-items:center;">
+          <input id="upload-input-hidden" type="file" accept="application/pdf" multiple style="display:none" />
+          <button id="upload-add-more" class="btn">Adicionar arquivos</button>
+          <button id="upload-clear" class="btn" title="Limpar lista">Limpar</button>
+          <div style="margin-left:auto;font-size:13px;color:var(--muted)"><span id="upload-count">0</span> arquivo(s)</div>
+        </div>
+
+        <div id="upload-list" class="upload-list" style="margin-top:12px; max-height:260px; overflow:auto; border:1px dashed #e9eef8; padding:8px; border-radius:8px;">
+          <div id="upload-empty" class="muted">Nenhum arquivo selecionado. Use "Adicionar arquivos" para incluir PDFs (um a um ou vários).</div>
+        </div>
+
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+          <button id="upload-cancel" class="btn">Cancelar</button>
+          <button id="upload-start" class="btn primary">Enviar tudo</button>
+        </div>
+
+        <div id="upload-progress" style="margin-top:8px;display:none">
+          <small class="muted">Enviando... <span id="upload-progress-text"></span></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
