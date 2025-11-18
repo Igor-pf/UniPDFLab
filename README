@@ -1,0 +1,56 @@
+# 🧪 UniPDFLab — Laboratório Local de PDFs
+
+**UniPDFLab** é uma ferramenta local para gerenciamento, visualização, correção manual e unificação de arquivos PDF. Com uma interface web intuitiva baseada no PDF.js, permite ajustes por página antes da fusão final dos documentos.
+
+## 📌 Funcionalidades
+
+- 📂 **Gerenciamento de PDFs**: Carregue múltiplos arquivos PDF para edição e organização.
+- 🖍️ **Correção manual por página**: Visualize e edite páginas individualmente antes de mesclar.
+- 🔍 **Visualização com PDF.js**: Interface moderna e responsiva para navegação nos documentos.
+- 🔗 **Unificação de PDFs**: Combine arquivos em um único documento final com controle de ordem e conteúdo.
+
+## 🚀 Como usar
+
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/Igor-pf/UniPDFLab.git
+   cd UniPDFLab
+   ```
+
+2. Instale as dependências (requer Python 3):
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Execute a aplicação:
+   ```bash
+   python app.py
+   ```
+
+4. Acesse no navegador:
+   ```
+   http://localhost:5000
+   ```
+
+## 🗂 Estrutura do projeto
+
+```
+UniPDFLab/
+├── app.py              # Aplicação principal Flask
+├── static/             # Arquivos estáticos (JS, CSS, imagens)
+├── templates/          # Templates HTML (interface web)
+├── work/               # Diretório para temporários e PDFs em edição
+├── README.md           # Este arquivo
+└── LICENSE             # Licença MIT
+```
+
+## 🧰 Tecnologias utilizadas
+
+- **Python + Flask**: Backend leve e rápido
+- **PDF.js**: Visualização de PDFs no navegador
+- **HTML/CSS/JavaScript**: Interface web
+- **PyPDF2 ou similar**: Manipulação de PDFs no backend (presumido)
+
+## 📄 Licença
+
+Este projeto está licenciado sob a [Licença MIT](LICENSE).
